@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TPG HH Payroll</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+<body style="background-color:powderblue;">
+
+<div class="container-fluid">
+
+        
+  <input id="connect" type="button" value="Connect to Metamask" onclick="startNow();">
+  
+
+        <h1>HACKER PAYROLL DAPP</h1><br>
+        <h2>A decentralized way of Registration / Recording Hours / Payments</h2><br><br>
+
+      
+    Coder Registration  <br><br>
+
+  <div class="form-row">
+
+      
+    <div class="form-group col-md-2">
+        <input  type="text" id="reg_param1" placeholder="web3 storage URI">
+        </div>
+    
+    <div class="form-group col-md-2">
+    <button id="button" onclick="registerMe()">Register Me</button><br>
+    </div>
+	
+	
+	<b><div id="view1" ></div></b>
+	<br>
+  </div>
+
+    Fix Hourly Rate of Coder (Only Owner) <br><br>
+
+  <div class="form-row">
+
+    <div class="form-group col-md-2">
+    <input  type="text" id="fix_param1" placeholder="Coder Employee Code">
+    </div>
+
+    <div class="form-group col-md-2">
+    <input  type="text" id="fix_param2" placeholder="Wei per hour">
+    </div>
+  
+	<div class="form-group col-md-2">
+    <button id="button" onclick="fixHourlyRate()">Submit</button><br>
+    </div>
+	
+	
+	<b><div id="view2" ></div></b>
+	<br>
+  </div>
+
+  
+    Clock My Hours <br><br>
+
+  <div class="form-row">
+
+    <div class="form-group col-md-2">
+    <input  type="text" id="record_param1" placeholder="No. of Hours">
+    </div>
+
+      
+	<div class="form-group col-md-2">
+    <button id="button" onclick="recordHours()">Submit</button><br>
+    </div>
+	
+	
+	<b><div id="view3" ></div></b>
+	<br>
+  </div>
+
+  Pay All Coders(Only Owner)<br><br>
+
+  <div class="form-row">
+    
+	<div class="form-group col-md-2">
+    <button id="button" onclick="payAll()">Transfer Eth to Coders</button><br>
+    </div>
+	
+	
+	<b><div id="view4" ></div></b>
+	<br>
+  </div>
+
+  Fund the Contract <br><br>
+  <div class="form-row">
+
+    <div class="form-group col-md-2">
+    <input  type="text" id="fund_param1" placeholder="Amount of Ether">
+    </div>
+      
+	<div class="form-group col-md-2">
+    <button id="button" onclick="fund()">Fund the Contract</button><br>
+    </div>
+	
+	
+	<b><div id="view5" ></div></b>
+	<br>
+  </div>
+
+  <script type="text/javascript" src="./abi.js"></script>
+  <script type="text/javascript">
+
+    window.userAddress = "";
+
+    const CONTRACT_ADDRESS = "0xE79a52708B5B11285527e8eF51fdBF15AE2B1d99";
+
+    async function startNow() {
+    if (window.ethereum) {
+        try {
+        await window.ethereum.request({ method: "eth_requestAccounts" })
+            .then(function (address) {
+            const web3 = new Web3(Web3.givenProvider || "http://localhost:8545");
+            myContract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
+            window.userAddress = address[0];
+            alert("Metamask connected sucessfully");
+            })
+            .catch((e) => e);
+
+            window.ethereum.on("accountsChanged", function (accounts) {
+                window.userAddress = address[0];
+            });
+            
+        } catch (error) {
+        if (error.code === 4001) {
+        }
+        console.log(error);
+
+        }
+    }
+    }    
+
+        if (window.userAddress) {
+        startNow();
+        
+    }
+
+
+    async function registerMe() {
+        var p1 = document.getElementById('reg_param1').value;
+        const result = await myContract.methods.registerMe(p1).send({
+            from : window.userAddress
+        }).
+        then(function(result) {
+            $("#view1").html('Coder address : ' + (result.events.Register.returnValues.Coder) + ' registered with Emp Code : '+(result.events.Register.returnValues.Code) );
+            console.log(result);
+        });
+
+    }
+
+async function fixHourlyRate() {
+    var p1 = document.getElementById('fix_param1').value;
+    var p2 = document.getElementById('fix_param2').value;
+
+    const result = await myContract.methods.fixRate(p1, p2).send({
+        from: window.userAddress
+    }).
+    then(function(result) {
+        $("#view2").html('Hourly Rate for Emp No : ' + (result.events.FixRate.returnValues.Code) + ' fixed at ' + (result.events.FixRate.returnValues.Amount) + ' wei per hour');
+        console.log(result);
+    });
+
+}
+
+
+async function recordHours() {
+    var p1 = document.getElementById('record_param1').value
+
+    const result = await myContract.methods.clockHours(p1).send({
+        from: window.userAddress
+    }).
+    then(function(result) {
+        $("#view3").html(p1+' Hours recorded ');
+        console.log(result);
+    });
+
+}
+
+
+async function payAll() {
+
+    const result = await myContract.methods.bulkTransfer().send({
+        from: window.userAddress
+    }).
+    then(function(result) {
+        $("#view4").html('Payments transfered');
+        console.log(result);
+
+    });
+}
+
+async function fund() {
+    var p1 = document.getElementById('fund_param1').value
+
+    const result = await myContract.methods.fundContract().send({
+        from: window.userAddress,
+        value : p1
+    }).
+    then(function(result) {
+        $("#view5").html('Wei deposited : ' + (result.events.Fund.returnValues.Amount));
+        console.log(result);
+    });
+
+}
+
+</script>
+
+</body>
+</html>
+
